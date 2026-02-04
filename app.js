@@ -1,41 +1,89 @@
-var createError = require('http-errors');
-var express = require('express');
-var path = require('path');
-var cookieParser = require('cookie-parser');
-var logger = require('morgan');
+var createError = require("http-errors");
+var express = require("express");
+var path = require("path");
+var cookieParser = require("cookie-parser");
+var logger = require("morgan");
 
-var indexRouter = require('./routes/index');
-var usersRouter = require('./routes/users');
+const excelReader = require("./service/excel-reader");
+const turAnalyse1 = require("./analyse/turAnalyse1");
+
+var indexRouter = require("./routes/index");
+var usersRouter = require("./routes/users");
 
 var app = express();
 
-// view engine setup
-app.set('views', path.join(__dirname, 'views'));
-app.set('view engine', 'ejs');
+// =========================
+// EAGER LOAD EXCEL (ONCE)
+// =========================
+async function excelReaderRunner() {
+  try {
+    const turData = await excelReader();
+    console.log("turData loaded:", turData.length);
+    app.locals.turData = turData;
+    return turData; // <== returner data til analyse
+  } catch (err) {
+    console.error("Excel load failed:", err);
+    process.exit(1);
+  }
+}
 
-app.use(logger('dev'));
+async function analyse1Runner(turData) {
+  try {
+    const analyse1 = await turAnalyse1(turData);
+    console.log("Analyse completed");
+    app.locals.analyse1 = analyse1;
+  } catch (err) {
+    console.error("Analyse failed:", err);
+  }
+}
+
+// Kjør sekvensielt
+(async () => {
+  const turData = await excelReaderRunner();
+  await analyse1Runner(turData);
+})();
+
+// =========================
+// VIEW ENGINE
+// =========================
+app.set("views", path.join(__dirname, "views"));
+app.set("view engine", "ejs");
+
+// =========================
+// GLOBAL MIDDLEWARE
+// =========================
+app.use(logger("dev"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, "public")));
 
-app.use('/', indexRouter);
-app.use('/users', usersRouter);
+// =========================
+// DATA INJECTION (AFTER LOAD)
+// =========================
+app.use((req, res, next) => {
+  req.turData = turData;
+  next();
+});
 
-// catch 404 and forward to error handler
-app.use(function(req, res, next) {
+// =========================
+// ROUTES
+// =========================
+app.use("/", indexRouter);
+app.use("/users", usersRouter);
+
+// =========================
+// ERRORS
+// =========================
+app.use(function (req, res, next) {
   next(createError(404));
 });
 
-// error handler
-app.use(function(err, req, res) {
-  // set locals, only providing error in development
+app.use(function (err, req, res) {
   res.locals.message = err.message;
-  res.locals.error = req.app.get('env') === 'development' ? err : {};
-
-  // render the error page
+  res.locals.error = req.app.get("env") === "development" ? err : {};
   res.status(err.status || 500);
-  res.render('error');
+  res.render("error");
 });
 
 module.exports = app;

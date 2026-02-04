@@ -7,5 +7,25 @@
   <body>
     <h1><%= title %></h1>
     <p>Welcome to <%= title %></p>
+    <table>
+  <thead>
+    <tr>
+      <th>Start</th>
+      <th>Stopp</th>
+      <th>Fra</th>
+      <th>Til</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% turData.forEach(function(tur) { %>
+      <tr>
+        <td><%= tur[4] %></td>
+        <td><%= tur[5] %></td>
+        <td><%= tur[9] %></td>
+        <td><%= tur[10] %></td>
+      </tr>
+    <% }) %>
+  </tbody>
+</table>
   </body>
 </html>

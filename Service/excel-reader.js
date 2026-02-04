@@ -14,10 +14,11 @@ function pathFinder() {
 async function excelReader() {
   try {
     const filePath = pathFinder();
-    const excelData = await readXlsxFile(filePath);
+    const turData = await readXlsxFile(filePath);
+    //console.log(turData);
     //req.excelData = excelData;
     //next();
-    return excelData;
+    return turData;
   } catch (error) {
     console.error("Error reading Excel file:", error);
     //res.status(500).json({ error: "Failed to read Excel file" });
