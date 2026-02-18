@@ -5,7 +5,7 @@ var cookieParser = require("cookie-parser");
 var logger = require("morgan");
 
 const excelReader = require("./service/excel-reader");
-const turAnalyse1 = require("./analyse/turAnalyse1");
+const { tellTurerPerSone, matrixMaker } = require("./analyse/turAnalyse1");
 
 var indexRouter = require("./routes/index");
 var usersRouter = require("./routes/users");
@@ -20,6 +20,8 @@ async function excelReaderRunner() {
     const turData = await excelReader();
     console.log("turData loaded:", turData.length);
     app.locals.turData = turData;
+    /* console.log(turData.length); */
+    console.log("excelReaderRunner Completed");
     return turData; // <== returner data til analyse
   } catch (err) {
     console.error("Excel load failed:", err);
@@ -27,21 +29,57 @@ async function excelReaderRunner() {
   }
 }
 
-async function analyse1Runner(turData) {
+async function analyseRunner(turData) {
   try {
-    const analyse1 = await turAnalyse1(turData);
-    console.log("Analyse completed");
-    app.locals.analyse1 = analyse1;
+    const soneTelling = await tellTurerPerSone(turData);
+    console.log("tellTurerPerSone completed"/* , soneTelling.length */);
+    app.locals.soneTelling = soneTelling;
+    console.log("AnalyseRunner Completed");
+    return soneTelling;
   } catch (err) {
-    console.error("Analyse failed:", err);
+    console.error("Analyse1 failed:", err);
+  }
+}
+
+async function analyseRunner2(turData) {
+  try {
+    const matrix = await matrixMaker(turData);
+    console.log("Analyse2 completed");
+    console.log(matrix);
+    app.locals.matrix = matrix;
+    console.log("AnalyseRunner2 Completed");
+  } catch (err) {
+    console.error("Analyse2 failed:", err);
   }
 }
 
 // Kjør sekvensielt
 (async () => {
-  const turData = await excelReaderRunner();
-  await analyse1Runner(turData);
+  await excelReaderRunner();
+  await analyseRunner(app.locals.turData);
+  await analyseRunner2(app.locals.turData);
 })();
+
+app.use((req, res, next) => {
+  if (!app.locals.turData) {
+    return res.status(503).send("turData not loaded yet");
+  }
+  next();
+});
+
+app.use((req, res, next) => {
+  if (!app.locals.soneTelling) {
+    return res.status(503).send("soneTelling not loaded yet");
+  }
+  next();
+});
+
+app.use((req, res, next) => {
+  if (!app.locals.matrix) {
+    return res.status(503).send("matrix not loaded yet");
+  }
+  next();
+});
 
 // =========================
 // VIEW ENGINE
@@ -62,7 +100,9 @@ app.use(express.static(path.join(__dirname, "public")));
 // DATA INJECTION (AFTER LOAD)
 // =========================
 app.use((req, res, next) => {
-  req.turData = turData;
+  res.locals.turData = app.locals.turData;
+  res.locals.soneTelling = app.locals.soneTelling;
+  res.locals.matrix = app.locals.matrix;
   next();
 });
 

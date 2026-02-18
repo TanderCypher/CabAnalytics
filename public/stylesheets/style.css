@@ -1,20 +1,29 @@
 body {
-  padding: 50px;
-  font:
-    14px "Lucida Grande",
-    Helvetica,
-    Arial,
-    sans-serif;
+  font-family: Arial, sans-serif;
+  margin: 20px;
 }
 
-a {
-  color: #00b7ff;
+h1, h2 {
+  color: #333;
 }
 
-thead {
-  border: 1px solid black;
+table {
+  border-collapse: collapse;
+  width: 100%;
+  margin-bottom: 40px;
 }
 
-tr {
-  border: 1px solid black;
+table.bordered th,
+table.bordered td {
+  border: 1px solid #666;
+  padding: 8px;
+  text-align: left;
+}
+
+table.bordered th {
+  background-color: #f0f0f0;
+}
+
+table.bordered tr:nth-child(even) {
+  background-color: #fafafa;
 }

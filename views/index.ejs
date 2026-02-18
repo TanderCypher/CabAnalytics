@@ -1,31 +1,155 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <title><%= title %></title>
-    <link rel='stylesheet' href='/stylesheets/style.css' />
-  </head>
-  <body>
-    <h1><%= title %></h1>
-    <p>Welcome to <%= title %></p>
-    <table>
+
+<head>
+  <title>
+    <%= title %>
+  </title>
+  <link rel='stylesheet' href='/stylesheets/style.css' />
+</head>
+
+<body>
+  <h1>
+    <%= title %>
+  </h1>
+  <p>Welcome to <%= title %>
+  </p>
+
+
+  <!-- ====================== -->
+<!-- Heatmap: Fra → Til -->
+<!-- ====================== -->
+
+<%
+  const matrixData = matrix?.from || {};
+
+  const zoneSet = new Set();
+
+  Object.keys(matrixData).forEach(fra => {
+    zoneSet.add(fra);
+    Object.keys(matrixData[fra]).forEach(til => zoneSet.add(til));
+  });
+
+  const zones = Array.from(zoneSet).sort((a,b) => a - b);
+
+  let maxValue = 0;
+  zones.forEach(fra => {
+    zones.forEach(til => {
+      const value = matrixData[fra]?.[til] || 0;
+      if (value > maxValue) maxValue = value;
+    });
+  });
+%>
+
+<h1>Turmatrise (Fra → Til)</h1>
+
+<table class="bordered">
   <thead>
     <tr>
-      <th>Start</th>
-      <th>Stopp</th>
-      <th>Fra</th>
-      <th>Til</th>
+      <th>Fra \ Til</th>
+      <% zones.forEach(til => { %>
+        <th><%= til %></th>
+      <% }) %>
     </tr>
   </thead>
+
   <tbody>
-    <% turData.forEach(function(tur) { %>
+    <% zones.forEach(fra => { %>
       <tr>
-        <td><%= tur[4] %></td>
-        <td><%= tur[5] %></td>
-        <td><%= tur[9] %></td>
-        <td><%= tur[10] %></td>
+        <th><%= fra %></th>
+
+        <% zones.forEach(til => { 
+             const value = matrixData[fra]?.[til] || 0;
+             const intensity = maxValue > 0 ? value / maxValue : 0;
+             const red = Math.floor(255 * intensity);
+        %>
+
+          <td style="background-color: rgb(<%= red %>,0,0); color: white;">
+            <%= value %>
+          </td>
+
+        <% }) %>
       </tr>
     <% }) %>
   </tbody>
 </table>
-  </body>
+
+  <!-- ====================== -->
+  <!-- Turer per sone tabell -->
+  <!-- ====================== -->
+
+  <% const fraSones=Object.keys(analyseData.fra).sort(); const tilSones=Object.keys(analyseData.til).sort(); const
+    maxRows=Math.max(fraSones.length, tilSones.length); %>
+
+    <h1>Antall turer per sone</h1>
+    <table class="bordered">
+      <thead>
+        <tr>
+          <th>Fra sone #</th>
+          <th>Antal turer</th>
+          <th>Gjennomsnitt/døgn</th>
+          <th>Til sone #</th>
+          <th>Antal turer</th>
+          <th>Gjennomsnitt/døgn</th>
+        </tr>
+      </thead>
+      <tbody>
+
+        <% for(let i=0; i < maxRows; i++) { %>
+          <tr>
+            <td>
+              <%= fraSones[i] || "" %>
+            </td>
+            <td>
+              <%= fraSones[i] ? analyseData.fra[fraSones[i]] : "" %>
+            </td>
+            <td>
+              <%= fraSones[i] ? analyseData.fra[fraSones[i]]/30 : "" %>
+            </td>
+            <td>
+              <%= tilSones[i] || "" %>
+            </td>
+            <td>
+              <%= tilSones[i] ? analyseData.til[tilSones[i]] : "" %>
+            </td>
+            <td>
+              <%= tilSones[i] ? analyseData.til[tilSones[i]]/30 : "" %>
+            </td>
+          </tr>
+          <% } %>
+      </tbody>
+    </table>
+
+    <h1>Data som er hentet ut: <% turData.length %>
+    </h1>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Start</th>
+          <th>Stopp</th>
+          <th>Fra</th>
+          <th>Til</th>
+      </thead>
+      <tbody>
+        <% turData.forEach(function(tur) { %>
+          <tr>
+            <td>
+              <%= tur[4] %>
+            </td>
+            <td>
+              <%= tur[5] %>
+            </td>
+            <td>
+              <%= tur[9] %>
+            </td>
+            <td>
+              <%= tur[10] %>
+            </td>
+          </tr>
+          <% }) %>
+      </tbody>
+    </table>
+</body>
+
 </html>
